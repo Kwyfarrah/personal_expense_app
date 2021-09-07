@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/transaction.dart';
+import './chart_bar.dart';
 
 class Chart extends StatelessWidget {
   final List<Transaction> recentTransactions;
 
   Chart(this.recentTransactions);
 
-  List<Map<String, Object>> get groupedTransactionValues {
+  List<Map<String, dynamic>> get groupedTransactionValues {
     // return:[{day: Sat, amount: 2000}, {day: Fri, amount: 0}, {day: Thu, amount: 0}, {day: Wed, amount: 0}, {day: Tue, amount: 0}, {day: Mon, amount: 0}, {day: Sun, amount: 0}]
     return List.generate(7, (index) {
       final weekDay = DateTime.now().subtract(
@@ -26,20 +27,41 @@ class Chart extends StatelessWidget {
       print(totalSum);
 
       return {
-        'day': DateFormat.E().format(weekDay), // return Wed,Thurs...
-        'amount': totalSum.toString(), // return amount
+        'day': DateFormat.E().format(weekDay), // return Wed,Thurs... (If want to 1 charactor, try .substring(0,1))
+        'amount': totalSum.toInt(), // return amount
       };
-    });
+    }).reversed.toList();
   }
+
+  int get totalSpending{
+    return groupedTransactionValues.fold(0,(sum, item){
+      return sum + item['amount'] as int;
+    });
+ }
 
   @override
   Widget build(BuildContext context) {
     print(groupedTransactionValues);
-    return Card(
-      elevation: 6,
-      margin: EdgeInsets.all(20),
-      child: Row(
-        children: <Widget>[],
+    return Container(
+      margin: EdgeInsets.only(top: 10),
+      child: Card(
+        elevation: 3,
+        margin: EdgeInsets.all(20),
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: Row(
+            children: groupedTransactionValues.map((data) {
+              return Flexible(
+                fit: FlexFit.tight,
+                child: ChartBar(
+                    data['day'] as String,
+                    data['amount'].toDouble(),
+                    totalSpending == 0 ? 0 : (data['amount']/totalSpending) as double,
+                ),
+              );
+            }).toList(),
+          ),
+        ),
       ),
     );
   }

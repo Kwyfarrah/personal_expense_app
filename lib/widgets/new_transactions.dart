@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class NewTransaction extends StatefulWidget {
   final Function addTx;
@@ -10,24 +11,44 @@ class NewTransaction extends StatefulWidget {
 }
 
 class _NewTransactionState extends State<NewTransaction> {
-  final titleController = TextEditingController();
+  final _titleController = TextEditingController();
+  final _amountController = TextEditingController();
+  DateTime? _selectedDate;
 
-  final amountController = TextEditingController();
+  void _submitData(){
+    if (_amountController.text.isEmpty){
+    return;
+   }
+    final enteredTitle = _titleController.text;
+    final enteredAmount = int.parse(_amountController.text);
 
-  void submitData() {
-    final enteredTitle = titleController.text;
-    final enteredAmount = int.parse(amountController.text);
-
-    if (enteredTitle.isEmpty || enteredAmount <= 0) {
+    if (enteredTitle.isEmpty || enteredAmount <= 0 || _selectedDate == null){
       return;
     }
-
     widget.addTx(
       enteredTitle,
       enteredAmount,
+      _selectedDate,
     );
 
     Navigator.of(context).pop(); //close automatically
+  }
+
+  void _presentDatePicker() {
+    showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2021),
+      lastDate: DateTime.now(),
+    ).then((pickedDate) {
+      if (pickedDate == null) {
+        return;
+      }
+      setState(() {
+        _selectedDate = pickedDate;
+      });
+    });
+    print('...');
   }
 
   @override
@@ -41,8 +62,8 @@ class _NewTransactionState extends State<NewTransaction> {
             TextField(
               decoration: InputDecoration(labelText: 'Title'),
               style: Theme.of(context).textTheme.bodyText1,
-              controller: titleController,
-              onSubmitted: (_) => submitData(),
+              controller: _titleController,
+              onSubmitted: (_) => _submitData(),
               // onChanged: (val) {
               //   titleInput = val;
               // },
@@ -50,33 +71,51 @@ class _NewTransactionState extends State<NewTransaction> {
             TextField(
               decoration: InputDecoration(labelText: 'Amount'),
               style: Theme.of(context).textTheme.bodyText1,
-              controller: amountController,
+              controller: _amountController,
               keyboardType: TextInputType.number,
-              onSubmitted: (_) => submitData(),
+              onSubmitted: (_) => _submitData(),
               // onChanged: (val) {
               //   amountInput = val;
               // },
             ),
-
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    _selectedDate == null
+                        ? 'No Date Chosen!'
+                        : 'Picked Date:  ${DateFormat.yMd().format(_selectedDate as DateTime)}',
+                    style: Theme.of(context).textTheme.bodyText1,
+                  ),
+                ),
+                FlatButton(
+                  child: Text(
+                    'Choose Date',
+                    style: Theme.of(context).textTheme.bodyText2,
+                  ),
+                  onPressed: _presentDatePicker,
+                ),
+              ],
+            ),
             Container(
-              margin:EdgeInsets.all(20),
+              margin: EdgeInsets.all(20),
               child: OutlinedButton(
                 child: Text(
                   'Add Transaction',
                   style: Theme.of(context).textTheme.bodyText2,
                 ),
                 style: ButtonStyle(
-                  shape: MaterialStateProperty.all<OutlinedBorder>(StadiumBorder()),
+                  shape: MaterialStateProperty.all<OutlinedBorder>(
+                      StadiumBorder()),
                   side: MaterialStateProperty.resolveWith<BorderSide>(
-                          (Set<MaterialState> states) {
-                        final Color color = states.contains(MaterialState.pressed)
-                            ?  Theme.of(context).primaryColorDark
-                            :  Theme.of(context).primaryColor;
-                        return BorderSide(color: color, width: 1);
-                      }
-                  ),
+                      (Set<MaterialState> states) {
+                    final Color color = states.contains(MaterialState.pressed)
+                        ? Theme.of(context).primaryColorDark
+                        : Theme.of(context).primaryColor;
+                    return BorderSide(color: color, width: 1);
+                  }),
                 ),
-                onPressed: submitData,
+                onPressed: _submitData,
               ),
             ),
           ],
